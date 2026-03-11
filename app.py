@@ -1,23 +1,8 @@
 from flask import Flask, render_template, request
 import sqlite3
+import os
 
 app = Flask(__name__)
-
-def create_table():
-    conn = sqlite3.connect('feedback.db')
-    c = conn.cursor()
-
-    c.execute('''
-    CREATE TABLE IF NOT EXISTS feedback(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        course TEXT,
-        message TEXT
-    )
-    ''')
-
-    conn.commit()
-    conn.close()
 
 @app.route('/')
 def home():
@@ -25,22 +10,21 @@ def home():
 
 @app.route('/submit', methods=['POST'])
 def submit():
-
     name = request.form['name']
     course = request.form['course']
     message = request.form['message']
 
     conn = sqlite3.connect('feedback.db')
-    c = conn.cursor()
+    cursor = conn.cursor()
 
-    c.execute("INSERT INTO feedback (name, course, message) VALUES (?,?,?)",
-              (name, course, message))
+    cursor.execute("CREATE TABLE IF NOT EXISTS feedback (name TEXT, course TEXT, message TEXT)")
+    cursor.execute("INSERT INTO feedback VALUES (?, ?, ?)", (name, course, message))
 
     conn.commit()
     conn.close()
 
-    return "Thank you! Your feedback has been submitted."
+    return "Feedback Submitted Successfully!"
 
 if __name__ == "__main__":
-    create_table()
-    app.run(host="0.0.0.0", port=10000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
